@@ -30,8 +30,8 @@
 (setq completion-cycle-threshold t)
 
 (setq make-backup-files nil) ; stop creating ~ files
-
 (setq auto-save-default nil)
+
 (setq-default tab-width 4)
 (setq-default indent-tabs-mode nil) ;; spaces instead of tabs
 (setq-default standard-indent 4)
@@ -171,21 +171,23 @@ by using nxml's indentation rules."
 ;;(change-theme 'modus-operandi 'modus-vivendi)
 
 ; dired settings
-(global-auto-revert-mode 1)
-;; Also auto refresh dired, but be quiet about it
-(setq dired-kill-when-opening-new-dired-buffer t) ; only one dired buffer
-(setq global-auto-revert-non-file-buffers t)
-(setq auto-revert-verbose nil)
-(setq dired-recursive-deletes 'always)
+
+
+
 ;(diredp-toggle-find-file-reuse-dir 1)
 (use-package dired
   :hook (dired-mode . dired-hide-details-mode)
   :config
+  (setq dired-kill-when-opening-new-dired-buffer t) ; only one dired buffer
+  (setq global-auto-revert-non-file-buffers t)
+  (setq auto-revert-verbose nil)
+  (setq dired-recursive-deletes 'always) ; Also auto refresh dired, but be quiet about it
+  (global-auto-revert-mode 1))
   ; Colourful columns.
   (use-package diredfl
     :ensure t
     :config
-    (diredfl-global-mode 1)))
+    (diredfl-global-mode 1))
 (use-package dired-subtree
   :ensure t
   :after dired
@@ -193,6 +195,61 @@ by using nxml's indentation rules."
               ("TAB" . dired-subtree-toggle)
               ("b" . dired-up-directory)))
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
+
+(use-package yasnippet
+  :diminish yas-minor-mode
+  :config
+    (use-package yasnippet-snippets)
+    (use-package auto-yasnippet)
+    (yas-reload-all))
+	(yas-global-mode t)
+
+(use-package company
+  :after lsp-mode
+  :diminish
+  :bind
+  (:map company-active-map
+        ("C-n". company-select-next)
+        ("C-p". company-select-previous)
+        ("M-<". company-select-first)
+        ("M->". company-select-last)
+        ("<tab>" . company-complete-selection))
+(:map lsp-mode-map
+        ("<tab>" . company-indent-or-complete-common))
+  :config
+  (setq company-dabbrev-other-buffers t
+        company-dabbrev-code-other-buffers t)
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.3)
+  :hook ((text-mode . company-mode)
+         (prog-mode . company-mode)
+         (org-mode . company-mode)
+         (company-mode . yas-minor-mode)
+         (lsp-mode . company-mode)))
+
+(use-package haskell-mode
+  :config
+  (use-package lsp-haskell)
+  (require 'lsp)
+  (require 'lsp-haskell)
+  (add-hook 'haskell-mode-hook #'haskell-indentation-mode)
+  (add-hook 'haskell-mode-hook #'yas-minor-mode)
+  (add-hook 'haskell-mode-hook #'lsp)
+  (setq haskell-stylish-on-save t))
+
+(use-package org
+  :config
+  (setq org-hide-emphasis-markers t))
+
+(use-package org-modern
+  :init
+  (add-hook 'org-mode-hook #'org-modern-mode)
+  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
+
+;; org-bullets
+(require 'org-bullets)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 ; automatically show css colors
 (use-package rainbow-mode
@@ -204,7 +261,11 @@ by using nxml's indentation rules."
 (use-package dashboard
   :ensure t
   :config
+  (setq dashboard-items '((recents  . 5)
+                        (bookmarks . 5)))
   (setq dashboard-show-shortcuts nil)
+  (setq dashboard-center-content t)
+  (setq dashboard-set-navigator t)
   (setq dashboard-set-file-icons t)
   (setq dashboard-set-heading-icons t)
   (setq dashboard-startup-banner 'official)
@@ -213,30 +274,7 @@ by using nxml's indentation rules."
 (when (display-graphic-p)
   (require 'all-the-icons))
 
-;;(use-package doom-modeline
-;;  :ensure t
-;;  :init (doom-modeline-mode 1))
-
 (load-theme 'modus-operandi t)
-
-; EMMS basic configuration
-;;(require 'emms-setup)
-;;(emms-all)
-;;(emms-default-players)
-;;(setq emms-source-file-default-directory "~/Music/") ;; Change to your music folder
-;;; Choose one of these
-;;(setq emms-info-functions '(emms-info-tinytag))  ;; When using Tinytag
-;;;(setq emms-info-functions '(emms-info-exiftool)) When using Exiftool
-;;(setq emms-browser-covers 'emms-browser-cache-thumbnail-async)
-
-; org settings
-;;(setq org-ellipsis " ")
-;; (font-lock-add-keywords 'org-mode
-;;                          '(("^ *\\([-]\\) "
-;;                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-;; org-bullets
-(require 'org-bullets)
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 ;; Vertico autocomplete
 (use-package vertico
@@ -249,11 +287,7 @@ by using nxml's indentation rules."
   :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
          ("M-A" . marginalia-cycle))
-
-  ;; The :init configuration is always executed (Not lazy!)
   :init
-  ;; Must be in the :init section of use-package such that the mode gets
-  ;; enabled right away. Note that this forces loading the package.
   (marginalia-mode))
 
 ;; Orderless completion
@@ -295,16 +329,17 @@ by using nxml's indentation rules."
  '(elfeed-db-directory "/home/matias/.emacs.d/elfeed")
  '(elfeed-search-filter "@2-week-ago")
  '(keyboard-coding-system 'utf-8-unix)
- '(line-spacing 1)
+ '(line-spacing 2)
+ '(org-hide-macro-markers nil)
  '(org-table-shrunk-column-indicator nil)
  '(package-selected-packages
-   '(treemacs pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
+   '(yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern treemacs pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
  '(tab-bar-close-button-show nil)
  '(tab-bar-format
    '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator tab-bar-format-align-right tab-bar-format-global))
  '(tab-bar-mode t)
  '(tab-bar-new-tab-choice t)
- '(tab-bar-show 1)
+ '(tab-bar-show t)
  '(warning-suppress-types '((comp))))
 ;; '(pulsar-pulse-functions
 ;;   '(isearch-repeat-forward isearch-repeat-backward recenter-top-bottom move-to-window-line-top-bottom reposition-window other-window delete-window delete-other-windows forward-page backward-page scroll-up-command scroll-down-command windmove-right windmove-left windmove-up windmove-down windmove-swap-states-right windmove-swap-states-left windmove-swap-states-up windmove-swap-states-down tab-new tab-close tab-next org-next-visible-heading org-previous-visible-heading org-forward-heading-same-level org-backward-heading-same-level outline-backward-same-level outline-forward-same-level outline-next-visible-heading outline-previous-visible-heading outline-up-heading)))
@@ -319,6 +354,7 @@ by using nxml's indentation rules."
  '(markdown-header-face-1 ((t (:inherit modus-themes-heading-1 :height 1.8))))
  '(markdown-header-face-2 ((t (:inherit modus-themes-heading-2 :height 1.5))))
  '(markdown-header-face-3 ((t (:inherit bold :foreground "#437000" :height 1.4))))
+ '(org-document-title ((t (:inherit modus-themes-heading-0 :height 2.0))))
  '(org-level-1 ((t (:inherit outline-1 :height 1.7))))
  '(org-level-2 ((t (:inherit outline-2 :height 1.4))))
  '(org-level-3 ((t (:inherit outline-3 :height 1.2))))

@@ -56,8 +56,6 @@
 ;        ,(format " - GNU Emacs %s")))
 (setq frame-title-format "%b")
 
-(setq dired-listing-switches "--group-directories-first -lha")
-
 ; Set the first day of the week to Monday
 (setq calendar-week-start-day 1)
 
@@ -172,17 +170,15 @@ by using nxml's indentation rules."
 
 ; dired settings
 
-
-
-;(diredp-toggle-find-file-reuse-dir 1)
 (use-package dired
   :hook (dired-mode . dired-hide-details-mode)
   :config
-  (setq dired-kill-when-opening-new-dired-buffer t) ; only one dired buffer
-  (setq global-auto-revert-non-file-buffers t)
-  (setq auto-revert-verbose nil)
-  (setq dired-recursive-deletes 'always) ; Also auto refresh dired, but be quiet about it
-  (global-auto-revert-mode 1))
+  (setq dired-listing-switches "--group-directories-first -lha"
+        dired-kill-when-opening-new-dired-buffer t ; only one dired buffer
+        global-auto-revert-non-file-buffers t
+        auto-revert-verbose nil
+        dired-recursive-deletes 'always ; Also auto refresh dired, but be quiet about it
+        global-auto-revert-mode 1))
   ; Colourful columns.
   (use-package diredfl
     :ensure t
@@ -201,8 +197,8 @@ by using nxml's indentation rules."
   :config
     (use-package yasnippet-snippets)
     (use-package auto-yasnippet)
-    (yas-reload-all))
-	(yas-global-mode t)
+    (yas-reload-all)
+	(yas-global-mode t))
 
 (use-package company
   :after lsp-mode
@@ -213,12 +209,14 @@ by using nxml's indentation rules."
         ("C-p". company-select-previous)
         ("M-<". company-select-first)
         ("M->". company-select-last)
-        ("<tab>" . company-complete-selection))
+        ("C-;" . company-complete-selection))
 (:map lsp-mode-map
         ("<tab>" . company-indent-or-complete-common))
   :config
   (setq company-dabbrev-other-buffers t
-        company-dabbrev-code-other-buffers t)
+        company-dabbrev-code-other-buffers t
+        company-idle-delay 0
+        company-minimum-prefix-length 4)
   :custom
   (company-minimum-prefix-length 1)
   (company-idle-delay 0.3)
@@ -307,7 +305,7 @@ by using nxml's indentation rules."
     '(("https://archlinux.org/feeds/news/" linux)
 	("https://www.reddit.com/r/linux.rss" linux reddit)
     ("https://www.sachachua.com/blog/feed" emacs)
-    ("httpns://www.reddit.com/r/emacs.rss" emacs reddit)
+    ("https://www.reddit.com/r/emacs.rss" emacs reddit)
 	("https://www.reddit.com/r/CommunismMemes.rss" memes reddit)
 	("https://xkcd.com/rss.xml" comics)
 	("https://lwn.net/headlines/rss" linux)
@@ -333,7 +331,7 @@ by using nxml's indentation rules."
  '(org-hide-macro-markers nil)
  '(org-table-shrunk-column-indicator nil)
  '(package-selected-packages
-   '(yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern treemacs pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
+   '(yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
  '(tab-bar-close-button-show nil)
  '(tab-bar-format
    '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator tab-bar-format-align-right tab-bar-format-global))
@@ -354,6 +352,7 @@ by using nxml's indentation rules."
  '(markdown-header-face-1 ((t (:inherit modus-themes-heading-1 :height 1.8))))
  '(markdown-header-face-2 ((t (:inherit modus-themes-heading-2 :height 1.5))))
  '(markdown-header-face-3 ((t (:inherit bold :foreground "#437000" :height 1.4))))
+ '(modus-themes-search-success-modeline ((t (:foreground "#004c2e"))) t)
  '(org-document-title ((t (:inherit modus-themes-heading-0 :height 2.0))))
  '(org-level-1 ((t (:inherit outline-1 :height 1.7))))
  '(org-level-2 ((t (:inherit outline-2 :height 1.4))))

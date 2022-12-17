@@ -49,11 +49,6 @@
 ;; remove the message in scratch buffer
 (setq initial-scratch-message "")
 
-; Show file name in title
-;;(setq frame-title-format
-;;      `((buffer-file-name "%b")))
-;        ,(format " - GNU Emacs %s" emacs-version)))
-;        ,(format " - GNU Emacs %s")))
 (setq frame-title-format "%b")
 
 ; Set the first day of the week to Monday
@@ -79,7 +74,10 @@
          (str (propertize " " 'display `(space :align-to (- right ,hpos 0)))))
     `((align-right menu-item ,str ignore)))))
 
-(global-hl-line-mode 1)
+(require 'tree-sitter)
+(require 'tree-sitter-langs)
+(global-tree-sitter-mode)
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
 (setq pulsar-pulse t)
 (setq pulsar-delay 0.055)
@@ -110,7 +108,6 @@ by using nxml's indentation rules."
 ;(setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
 
 ; set global keybdings
-;;(global-set-key (kbd "C-x m") 'emms)
 (global-set-key (kbd "C-/") 'undo)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "<f8>") 'global-hl-line-mode)
@@ -118,14 +115,12 @@ by using nxml's indentation rules."
 (global-set-key (kbd "C-x C-k") 'kill-buffer-and-window)
 (global-set-key (kbd "<f5>") 'modus-themes-toggle)
 (global-set-key (kbd "<f3>") 'treemacs-select-directory)
+(global-set-key (kbd "M-o") 'dired-omit-mode)
 ; Create a new line below current
 (global-set-key (kbd "<C-return>") (lambda ()
                    (interactive)
                    (end-of-line)
                    (newline-and-indent)))
-;;(global-set-key (kbd "<XF86AudioPrev>") 'emms-previous)
-;;(global-set-key (kbd "<XF86AudioNext>") 'emms-next)
-;;(global-set-key (kbd "<XF86AudioPlay>") 'emms-pause)
 
 (setq help-window-select t)  ; Switch to help buffers automatically
 (when window-system (set-frame-size (selected-frame) 165 42)) ; Set default window size
@@ -161,15 +156,7 @@ by using nxml's indentation rules."
 ;; automatically focus on man page
 (setq Man-notify-method 'aggressive)
 
-;; change theme based on time
-;;(setq calendar-location-name "Kouvola, FI") 
-;;(setq calendar-latitude 60.86)
-;;(setq calendar-longitude 26.70)
-;;(require 'theme-changer)
-;;(change-theme 'modus-operandi 'modus-vivendi)
-
 ; dired settings
-
 (use-package dired
   :hook (dired-mode . dired-hide-details-mode)
   :config
@@ -191,6 +178,10 @@ by using nxml's indentation rules."
               ("TAB" . dired-subtree-toggle)
               ("b" . dired-up-directory)))
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
+
+(require 'dired-x)
+(setq dired-omit-files "^\\...+$")
+(add-hook 'dired-mode-hook (lambda () (dired-omit-mode 1)))
 
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -226,24 +217,14 @@ by using nxml's indentation rules."
          (company-mode . yas-minor-mode)
          (lsp-mode . company-mode)))
 
-(use-package haskell-mode
-  :config
-  (use-package lsp-haskell)
-  (require 'lsp)
-  (require 'lsp-haskell)
-  (add-hook 'haskell-mode-hook #'haskell-indentation-mode)
-  (add-hook 'haskell-mode-hook #'yas-minor-mode)
-  (add-hook 'haskell-mode-hook #'lsp)
-  (setq haskell-stylish-on-save t))
-
 (use-package org
   :config
   (setq org-hide-emphasis-markers t))
 
-(use-package org-modern
-  :init
-  (add-hook 'org-mode-hook #'org-modern-mode)
-  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
+;(use-package org-modern
+;  :init
+;  (add-hook 'org-mode-hook #'org-modern-mode)
+;  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
 
 ;; org-bullets
 (require 'org-bullets)
@@ -312,6 +293,27 @@ by using nxml's indentation rules."
     ( "https://www.phoronix.com/phoronix-rss.php" tech linux)
 	("https://www.omgubuntu.co.uk/feed" linux)
 	("https://thisweek.gnome.org/index.xml" linux)))
+(use-package general
+ :ensure t)
+
+(general-define-key
+ :keymaps 'mpc-mode-map
+ :states 'normal
+ "j" 'move-mpc-down
+ "k" 'move-mpc-up
+ "t" 'mpc-toggle-play
+ "r" 'mpc-toggle-repeat
+ "s" 'mpc-toggle-shuffle
+ "S" 'mpc-toggle-shuffle
+ "c" 'mpc-toggle-consume
+ "a" 'mpc-playlist-add
+ "p" 'mpc-playlist
+ ">" 'mpc-next
+ "<" 'mpc-prev
+ "R" 'mpc-playlist-delete
+ "RET" 'mpc-select
+ "x" 'mpc-play-at-point
+ )
 
 ; nov epub reader
 (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
@@ -331,13 +333,14 @@ by using nxml's indentation rules."
  '(org-hide-macro-markers nil)
  '(org-table-shrunk-column-indicator nil)
  '(package-selected-packages
-   '(yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
+   '(mpdmacs general mpdel simple-mpc mingus tree-sitter-langs tree-sitter @ yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
  '(tab-bar-close-button-show nil)
  '(tab-bar-format
    '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator tab-bar-format-align-right tab-bar-format-global))
  '(tab-bar-mode t)
  '(tab-bar-new-tab-choice t)
  '(tab-bar-show t)
+ '(warning-minimum-level :error)
  '(warning-suppress-types '((comp))))
 ;; '(pulsar-pulse-functions
 ;;   '(isearch-repeat-forward isearch-repeat-backward recenter-top-bottom move-to-window-line-top-bottom reposition-window other-window delete-window delete-other-windows forward-page backward-page scroll-up-command scroll-down-command windmove-right windmove-left windmove-up windmove-down windmove-swap-states-right windmove-swap-states-left windmove-swap-states-up windmove-swap-states-down tab-new tab-close tab-next org-next-visible-heading org-previous-visible-heading org-forward-heading-same-level org-backward-heading-same-level outline-backward-same-level outline-forward-same-level outline-next-visible-heading outline-previous-visible-heading outline-up-heading)))

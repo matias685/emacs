@@ -7,6 +7,8 @@
 ; Default font
 (add-to-list 'default-frame-alist
              '(font . "Iosevka 12"))
+; Debugging
+;(setq debug-on-error t)
 
 ;; kill vterm buffer without confirmation
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
@@ -15,12 +17,28 @@
 ;; don't ask about processes when closing emacs
 (setq confirm-kill-processes nil)
 
-;; remove bars
+;; remove gui objects
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (toggle-scroll-bar -1)
 (set-fringe-mode 0)
-(setq set-fringe-mode 0)
+
+(setq load-prefer-newer t)
+
+(show-paren-mode 1)
+
+; everything utf-8
+(prefer-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+
+; reload emacs config
+(defun config-reload ()
+  "Reloads ~/.emacs.d/init.el at runtime"
+  (interactive)
+  (load-file (expand-file-name "~/.emacs.d/init.el")))
+(global-set-key (kbd "C-c r") 'config-reload)
 
 ; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -29,9 +47,18 @@
 (setq read-file-name-completion-ignore-case t)
 (setq completion-cycle-threshold t)
 
-(setq make-backup-files nil) ; stop creating ~ files
+; smooth scrolling
+(pixel-scroll-precision-mode)
+(setq pixel-scroll-precision-large-scroll-height 40.0)
+
+; stop creating backup files
+(setq make-backup-files nil)
 (setq auto-save-default nil)
 
+;; TAB cycle if there are only few candidates
+(setq completion-cycle-threshold 3)
+;; Enable indentation+completion using the TAB key.
+(setq tab-always-indent 'complete)
 (setq-default tab-width 4)
 (setq-default indent-tabs-mode nil) ;; spaces instead of tabs
 (setq-default standard-indent 4)
@@ -46,15 +73,12 @@
 ; disable bell sound
 (setq ring-bell-function 'ignore)
 
-;; remove the message in scratch buffer
-(setq initial-scratch-message "")
-
 (setq frame-title-format "%b")
 
 ; Set the first day of the week to Monday
 (setq calendar-week-start-day 1)
 
-;; show tabs at top
+;; show tabs at top and display date & time
 (tab-bar-mode 1)
 (use-package time
   :commands world-clock
@@ -74,11 +98,13 @@
          (str (propertize " " 'display `(space :align-to (- right ,hpos 0)))))
     `((align-right menu-item ,str ignore)))))
 
+; tree-sitter
 (require 'tree-sitter)
 (require 'tree-sitter-langs)
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
+; pulsar settings
 (setq pulsar-pulse t)
 (setq pulsar-delay 0.055)
 (setq pulsar-iterations 10)
@@ -86,6 +112,7 @@
 (setq pulsar-highlight-face 'pulsar-yellow)
 (pulsar-global-mode 1)
 
+; xml indentation fix
 (defun bf-pretty-print-xml-region (begin end)
   "Pretty format XML markup in region. You need to have nxml-mode
 http://www.emacswiki.org/cgi-bin/wiki/NxmlMode installed to do
@@ -103,9 +130,6 @@ by using nxml's indentation rules."
 
 ; set indentation width to 4 spaces in c files
 (setq-default c-basic-offset 4)
-;(pixel-scroll-precision-mode)
-; Open dashboard when using emacsclient
-;(setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
 
 ; set global keybdings
 (global-set-key (kbd "C-/") 'undo)
@@ -116,7 +140,9 @@ by using nxml's indentation rules."
 (global-set-key (kbd "<f5>") 'modus-themes-toggle)
 (global-set-key (kbd "<f3>") 'treemacs-select-directory)
 (global-set-key (kbd "M-o") 'dired-omit-mode)
-; Create a new line below current
+(global-unset-key (kbd "C-z"))
+(global-set-key (kbd "C-z") #'undo)
+; Create a new line below cursor
 (global-set-key (kbd "<C-return>") (lambda ()
                    (interactive)
                    (end-of-line)
@@ -124,12 +150,6 @@ by using nxml's indentation rules."
 
 (setq help-window-select t)  ; Switch to help buffers automatically
 (when window-system (set-frame-size (selected-frame) 165 42)) ; Set default window size
-; disable scroll bar on new emacsclient frames
-(defun my/disable-scroll-bars (frame)
-  (modify-frame-parameters frame
-                            '((vertical-scroll-bars . nil)
-                             (horizontal-scroll-bars . nil))))
-(add-hook 'after-make-frame-functions 'my/disable-scroll-bars)
 
 ; create closing paranthesis automatically
 (electric-pair-mode 1)
@@ -137,13 +157,13 @@ by using nxml's indentation rules."
 
 ;; add line numbers on code files
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-;(add-hook 'text-mode-hook 'display-line-numbers-mode)
 
 ;; Distraction-free screen
   (use-package olivetti
     :init
     (setq olivetti-body-width 0.56))
 
+; markdown mode
 (use-package markdown-mode
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)
@@ -178,18 +198,22 @@ by using nxml's indentation rules."
               ("TAB" . dired-subtree-toggle)
               ("b" . dired-up-directory)))
 (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)
-
 (require 'dired-x)
 (setq dired-omit-files "^\\...+$")
 (add-hook 'dired-mode-hook (lambda () (dired-omit-mode 1)))
 
+(use-package page-break-lines
+  :requires dashboard
+  :init
+    (global-page-break-lines-mode))
+
 (use-package yasnippet
-  :diminish yas-minor-mode
   :config
-    (use-package yasnippet-snippets)
-    (use-package auto-yasnippet)
-    (yas-reload-all)
-	(yas-global-mode t))
+    ;;(use-package yasnippet-snippets)
+    ;;(use-package auto-yasnippet)
+  (yas-reload-all)
+  (yas-global-mode))
+(global-set-key (kbd "C-c y") 'yas-insert-snippet)
 
 (use-package company
   :after lsp-mode
@@ -220,11 +244,6 @@ by using nxml's indentation rules."
 (use-package org
   :config
   (setq org-hide-emphasis-markers t))
-
-;(use-package org-modern
-;  :init
-;  (add-hook 'org-mode-hook #'org-modern-mode)
-;  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
 
 ;; org-bullets
 (require 'org-bullets)
@@ -296,27 +315,18 @@ by using nxml's indentation rules."
 (use-package general
  :ensure t)
 
-(general-define-key
- :keymaps 'mpc-mode-map
- :states 'normal
- "j" 'move-mpc-down
- "k" 'move-mpc-up
- "t" 'mpc-toggle-play
- "r" 'mpc-toggle-repeat
- "s" 'mpc-toggle-shuffle
- "S" 'mpc-toggle-shuffle
- "c" 'mpc-toggle-consume
- "a" 'mpc-playlist-add
- "p" 'mpc-playlist
- ">" 'mpc-next
- "<" 'mpc-prev
- "R" 'mpc-playlist-delete
- "RET" 'mpc-select
- "x" 'mpc-play-at-point
- )
+(use-package avy
+   :bind
+   ("M-s" . avy-goto-char))
 
-; nov epub reader
-(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+; C-s: ctrlf-forward-default (originally isearch-forward)
+; C-r: ctrlf-backward-default (originally isearch-backward)
+; C-M-s: ctrlf-forward-alternate (originally isearch-forward-regexp)
+; C-M-r: ctrlf-backward-alternate (originally isearch-backward-regexp)
+; M-s _: ctrlf-forward-symbol (originally isearch-forward-symbol)
+; M-s .: ctrlf-forward-symbol-at-point (originally isearch-forward-symbol-at-point)
+(use-package ctrlf
+  :init (ctrlf-mode +1))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -333,7 +343,7 @@ by using nxml's indentation rules."
  '(org-hide-macro-markers nil)
  '(org-table-shrunk-column-indicator nil)
  '(package-selected-packages
-   '(mpdmacs general mpdel simple-mpc mingus tree-sitter-langs tree-sitter @ yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
+   '(page-break-lines ctrlf avy tree-sitter-indent json-mode modus-themes mpdmacs general mpdel simple-mpc mingus tree-sitter-langs tree-sitter @ yasnippet-snippets auto-yasnippet yasnippet company lsp-haskell org-modern pulsar markdown-mode ef-themes transpose-frame nov olivetti dired-single haskell-mode emms dired-subtree dired+ diredfl all-the-icons-dired vterm sudo-edit elfeed-goodies elfeed vertico orderless centered-window org-tree-slide marginalia org-bullets magit use-package rainbow-mode org doom-modeline dashboard))
  '(tab-bar-close-button-show nil)
  '(tab-bar-format
    '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator tab-bar-format-align-right tab-bar-format-global))
